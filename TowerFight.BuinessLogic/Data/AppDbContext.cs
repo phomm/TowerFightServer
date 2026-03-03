@@ -5,8 +5,6 @@ namespace TowerFight.BusinessLogic.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    private bool IsSqlServer => Database.IsSqlServer();
-
     public DbSet<LeaderDao> Leaders { get; init; }
 
     protected override void OnModelCreating(ModelBuilder builder)
