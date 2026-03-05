@@ -8,22 +8,14 @@ namespace TowerFight.BusinessLogic.Services
         Task ClearCache(CancellationToken cancellationToken);
     }
 
-    public class CacheService: ICacheService
+    public class CacheService(IRedisCache _redisCache) : ICacheService
     {
-        private readonly IRedisCache _redisCache;
-
-        public CacheService(IRedisCache redisCache)
-        {
-            _redisCache = redisCache;
-        }
-
         public async Task ClearCache(CancellationToken cancellationToken)
         {
             const string leaderKey = nameof(Leader);            
             const string leaderCacheSet = nameof(Leader);
             
-            await _redisCache.RemoveAsync(leaderCacheSet, leaderKey);
-            
+            await _redisCache.RemoveAsync(leaderCacheSet, leaderKey);            
         }
     }
 }

@@ -6,14 +6,9 @@ namespace TowerFight.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class LeadersController : ControllerBase
+public class LeadersController(ILeadersService LeadersService) : ControllerBase
 {
-    private readonly ILeadersService _LeadersService;
-
-    public LeadersController(ILeadersService LeadersService)
-    {
-        _LeadersService = LeadersService;
-    }
+    private readonly ILeadersService _LeadersService = LeadersService;
 
     [HttpGet("", Name = "GetLeaders")]
     [ProducesResponseType(typeof(IEnumerable<Leader>), StatusCodes.Status200OK)]

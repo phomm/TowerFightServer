@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-
 namespace TowerFight.API.Health;
 
 public static class HealthCheckConsts

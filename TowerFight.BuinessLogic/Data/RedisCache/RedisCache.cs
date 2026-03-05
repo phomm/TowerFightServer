@@ -5,25 +5,17 @@ using StackExchange.Redis;
 
 namespace TowerFight.BusinessLogic.Data.RedisCache;
 
-public class RedisCache : IRedisCache
+public class RedisCache(IRedisConnectionFactory redisConnectionFactory, ILogger<RedisCache> _logger) : IRedisCache
 {
-    private readonly Lazy<IDatabase> _database;
-    private readonly ILogger<RedisCache> _logger;
-
-    public RedisCache(IRedisConnectionFactory redisConnectionFactory, ILogger<RedisCache> logger)
-    {
-        _logger = logger;
-        _database = new Lazy<IDatabase>(() => redisConnectionFactory.Database);
-    }
-
+    private readonly Lazy<IDatabase> _database = new(() => redisConnectionFactory.Database);
+    
     public async Task<bool> AddAsync<T>(string cacheSet, string key, T value)
     {
         var serialized = JsonSerializer.Serialize(value);
 
         _logger.LogDebug("AddAsync to cacheSet={cacheSet} with key={key}, value={value}", cacheSet, key, serialized);
 
-        return await _database.Value.HashSetAsync(cacheSet, key, serialized).ConfigureAwait(false);
-          
+        return await _database.Value.HashSetAsync(cacheSet, key, serialized).ConfigureAwait(false);          
     }
 
     public async Task<T?> GetAsync<T>(string cacheSet, string key) where T : class

@@ -1,5 +1,4 @@
-﻿using Microsoft.OpenApi;
-using Microsoft.OpenApi.Models;
+﻿using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace TowerFight.API.Health;
@@ -13,10 +12,10 @@ internal class HealthCheckEndpointFilter : IDocumentFilter
         var openApiPathItem1 = new OpenApiPathItem();
         var operation = new OpenApiOperation
         {
-            Tags = new List<OpenApiTag>
-            {
+            Tags =
+            [
                 new() { Name = "Monitoring" }
-            },
+            ],
             Responses = new OpenApiResponses
             {
                 {

@@ -12,16 +12,9 @@ namespace TowerFight.BusinessLogic.Services
         Task<IEnumerable<Leader>> GetLeadersAsync(CancellationToken cancellationToken);
     }
 
-    public class LeadersService : ILeadersService
+    public class LeadersService(IDbContextFactory<AppDbContext> _dbContextFactory, IRedisCache _redisCache) : ILeadersService
     {
-        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
-        private readonly IRedisCache _redisCache;
-
-        public LeadersService(IDbContextFactory<AppDbContext> dbContextFactory, IRedisCache redisCache)
-        {
-            _dbContextFactory = dbContextFactory;
-            _redisCache = redisCache;
-        }
+        const int MaxLeadersCount = 10;
 
         public async Task<IEnumerable<Leader>> GetLeadersAsync(CancellationToken cancellationToken)
         {
@@ -39,10 +32,13 @@ namespace TowerFight.BusinessLogic.Services
                 Task.Run(async () =>
                     {
                         await using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-                        Leaders = await context.Leaders.AsNoTracking().ToListAsync(cancellationToken);
+                        Leaders = await context.Leaders
+                            .AsNoTracking()
+                            .Where(l => l.Number <= MaxLeadersCount)
+                            .OrderBy(l => l.Difficulty).ThenBy(l => l.Number)
+                            .ToListAsync(cancellationToken);
                     }, cancellationToken)
                 );
-
             
             LeadersResult = LeaderMapper.Map(Leaders);
 
@@ -50,6 +46,5 @@ namespace TowerFight.BusinessLogic.Services
 
             return LeadersResult;
         }
-
     }
 }

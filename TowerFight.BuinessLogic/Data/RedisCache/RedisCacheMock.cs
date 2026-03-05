@@ -2,15 +2,8 @@
 
 namespace TowerFight.BusinessLogic.Data.RedisCache;
 
-public class RedisCacheMock : IRedisCache
+public class RedisCacheMock(IMemoryCache _memoryCache) : IRedisCache
 {
-    private readonly IMemoryCache _memoryCache;
-
-    public RedisCacheMock(IMemoryCache memoryCache)
-    {
-        _memoryCache = memoryCache;
-    }
-
     public Task<bool> AddAsync<T>(string cacheSet, string key, T value)
     {
         _memoryCache.Set(key, value);

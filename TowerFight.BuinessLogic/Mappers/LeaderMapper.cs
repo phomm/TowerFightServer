@@ -12,6 +12,6 @@ public partial class LeaderMapper
     public static IReadOnlyList<Leader> Map(IReadOnlyList<LeaderDao> daos)
     {
         var mapper = new LeaderMapper();
-        return [.. daos.Select(mapper.Map).OrderBy(x => x.Number)];
+        return [.. daos.Select(mapper.Map)];
     }
 }
