@@ -8,10 +8,17 @@ namespace TowerFight.BusinessLogic.Mappers;
 public partial class LeaderMapper
 {
     public partial Leader Map(LeaderDao dao);
+    public partial LeaderResponse Map(Leader dao);
 
-    public static IReadOnlyList<Leader> Map(IReadOnlyList<LeaderDao> daos)
+    public static IReadOnlyList<Leader> MapDaos(IReadOnlyList<LeaderDao> input)
     {
         var mapper = new LeaderMapper();
-        return [.. daos.Select(mapper.Map).Select((l, i) => l with { Number = i + 1 })];
+        return [.. input.Select(mapper.Map)];
+    }
+
+    public static IReadOnlyList<LeaderResponse> MapList(IEnumerable<Leader> input)
+    {
+        var mapper = new LeaderMapper();
+        return [.. input.Select(mapper.Map).Select((l, i) => l with { Number = i + 1 })];
     }
 }
