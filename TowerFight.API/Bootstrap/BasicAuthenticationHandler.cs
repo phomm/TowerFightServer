@@ -1,0 +1,46 @@
+﻿using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
+
+namespace TowerFight.API.Bootstrap;
+
+public class BasicAuthenticationHandler(IConfiguration config, IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) 
+    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+{
+    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        if (!Request.Headers.TryGetValue("Authorization", out var value))
+            return AuthenticateResult.NoResult();
+
+        try
+        {
+            var authHeader = AuthenticationHeaderValue.Parse(value);
+            var credentialBytes = Convert.FromBase64String(authHeader.Parameter ?? string.Empty);
+            var credentials = Encoding.UTF8.GetString(credentialBytes).Split(':', 2);
+            var username = credentials[0];
+            var password = credentials[1];
+
+            var validUsername = config["BasicAuth:Username"];   
+            var validPassword = config["BasicAuth:Password"];
+
+            if (username == validUsername && password == validPassword)
+            {
+                var claims = new[] { 
+                    new Claim(ClaimTypes.Name, username),
+                    new Claim(ClaimTypes.Role, Policies.Admin)
+                };
+                var identity = new ClaimsIdentity(claims, Scheme.Name);
+                var principal = new ClaimsPrincipal(identity);
+                var ticket = new AuthenticationTicket(principal, Scheme.Name);
+
+                return AuthenticateResult.Success(ticket);
+            }
+        }
+        catch { return AuthenticateResult.Fail("Invalid Authorization Header"); }
+
+        return AuthenticateResult.Fail("Invalid Username or Password");
+    }
+}

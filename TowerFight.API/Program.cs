@@ -17,6 +17,7 @@ builder.AddConfigOptions<DbSettings>();
 builder.Services
     .AddHealth(builder.Configuration)
     .AddHttpContextAccessor()
+    .CustomizeAuthorization()
     .AddControllers()
     .AddJsonOptions(options =>
     {

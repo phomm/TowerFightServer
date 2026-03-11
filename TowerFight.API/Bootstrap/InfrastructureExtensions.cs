@@ -39,7 +39,7 @@ public static class InfrastructureExtensions
     public static IServiceCollection AddSwagger(this IServiceCollection serviceCollection)
     {
         const string version = "v1";
-        const string scheme = "Bearer";
+        const string scheme = "basic";
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         serviceCollection.AddEndpointsApiExplorer();
         serviceCollection.AddSwaggerGen(options =>
@@ -54,7 +54,7 @@ public static class InfrastructureExtensions
             options.AddSecurityDefinition(scheme, new OpenApiSecurityScheme
             {
                 Name = "Authorization",
-                Type = SecuritySchemeType.ApiKey,
+                Type = SecuritySchemeType.Http,
                 In = ParameterLocation.Header,
                 Scheme = scheme
             });
@@ -101,16 +101,4 @@ public static class InfrastructureExtensions
 
         return serviceCollection;
     }
-
-    /*
-    public static IServiceCollection AddValidation(this IServiceCollection services)
-    {
-        services.AddValidatorsFromAssemblyContaining<Program>()
-            .AddFluentValidationAutoValidation()
-            .AddFluentValidationClientsideAdapters();
-        services.AddScoped<IValidator<ResultRequest>, ResultRequestValidator>();
-
-        return services;
-    }
-    */
 }
