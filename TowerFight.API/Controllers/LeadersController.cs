@@ -10,7 +10,7 @@ namespace TowerFight.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class LeadersController(ILeadersService _LeadersService, IConfiguration configuration) : ControllerBase
+public class LeadersController(ILeadersService _LeadersService, IConfiguration configuration, HighscoreHashUtility highscoreHashUtility) : ControllerBase
 {
     [HttpGet("", Name = "GetLeaders")]
     [ProducesResponseType(typeof(IEnumerable<Leader>), StatusCodes.Status200OK)]
@@ -29,7 +29,7 @@ public class LeadersController(ILeadersService _LeadersService, IConfiguration c
         CancellationToken cancellationToken)
     {
         var signingSettings = configuration.GetSection(nameof(SigningSettings)).Get<SigningSettings>()!;
-        if (signingSettings.Enabled && !HighscoreHashUtility.IsValid(request))
+        if (signingSettings.Enabled && !highscoreHashUtility.IsValid(request))
         {
             return Problem("Invalid request. Please update your app", statusCode: (int)HttpStatusCode.BadRequest);
         }

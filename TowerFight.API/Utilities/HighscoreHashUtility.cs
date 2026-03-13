@@ -5,24 +5,17 @@ using TowerFight.BusinessLogic.Data.Config;
 
 namespace TowerFight.API.Utilities;
 
-public static class HighscoreHashUtility
+public class HighscoreHashUtility
 {
-    //private const string Salt = "359556b3-c70b-4106-8dff-4e723bda8cfc";
+    private readonly string _salt;
 
-    private static readonly string Salt;
-
-    static HighscoreHashUtility()
+    public HighscoreHashUtility(IConfiguration configuration)
     {
-        var configuration = new ConfigurationBuilder()
-            .AddEnvironmentVariables()
-            .AddJsonFile("secrets.json", true)
-            .Build();
-        var signingSettings = configuration.GetSection(nameof(SigningSettings)).Get<SigningSettings>()!;
-
-        Salt = signingSettings?.HighscoreHashSalt ?? throw new InvalidOperationException("HighscoreHashSalt not configured");
+        var signingSettings = configuration.GetSection("SigningSettings").Get<SigningSettings>();
+        _salt = signingSettings?.HighscoreHashSalt ?? throw new InvalidOperationException("HighscoreHashSalt not configured");
     }
 
-    public static bool IsValid(InsertHighscoreRequest request)
+    public bool IsValid(InsertHighscoreRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Hash))
         {
@@ -34,14 +27,14 @@ public static class HighscoreHashUtility
             $"{nameof(request.Difficulty)}={request.Difficulty}",
             $"{nameof(request.Score)}={request.Score}",
             $"{nameof(request.Name)}={request.Name}",
-            $"{nameof(Salt)}={Salt}",
+            $"Salt={_salt}",
         };
-        
+
         if (request.Guid.HasValue)
         {
             parts.Add($"{nameof(request.Guid)}={request.Guid}");
         }
-        
+
         parts.Sort();
         var payload = string.Join(":", parts);
         var payloadBytes = Encoding.UTF8.GetBytes(payload);
