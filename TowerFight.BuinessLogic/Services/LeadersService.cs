@@ -69,7 +69,7 @@ namespace TowerFight.BusinessLogic.Services
             existingLeader = await GetByNameDifficultyAsync(candidate.Name, candidate.Difficulty, cancellationToken);
             if (existingLeader is not null)
             {
-                if (existingLeader.Score >= candidate.Difficulty)
+                if (existingLeader.Score >= candidate.Score)
                 {
                     _logger.LogInformation("No changes to leaderboard for {Name} at difficulty {Difficulty}.", candidate.Name, candidate.Difficulty);
                     return new OperationOkNoChanges("The operation is succesful, but no changes to Leaders board");
