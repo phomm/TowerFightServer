@@ -18,7 +18,6 @@ RUN dotnet restore "./TowerFight.API/./TowerFight.API.csproj"
 COPY . .
 WORKDIR "/src/TowerFight.API"
 RUN dotnet build "./TowerFight.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
-RUN apt-get update && apt-get install -y libgssapi-krb5-2
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
