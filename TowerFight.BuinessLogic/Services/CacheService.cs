@@ -10,7 +10,7 @@ namespace TowerFight.BusinessLogic.Services
     public interface ICacheService
     {
         Task ClearCache(CancellationToken cancellationToken);
-        Task PushToDb(CancellationToken cancellationToken);
+        Task<bool> PushToDb(CancellationToken cancellationToken);
     }
 
     public class CacheService(IRedisCache _redisCache, IDbContextFactory<AppDbContext> _dbContextFactory, ILogger<CacheService> _logger) : ICacheService
@@ -25,20 +25,20 @@ namespace TowerFight.BusinessLogic.Services
             _logger.LogInformation("Cache cleared for key: {LeaderKey}", leaderKey);
         }
 
-        public async Task PushToDb(CancellationToken cancellationToken)
+        public async Task<bool> PushToDb(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Pushing cache data to database.");
             if (!await IsDbAliveAsync(cancellationToken))
             {
                 _logger.LogWarning("Database is not available. Aborting PushToDb.");
-                return;
+                return false;
             }
 
             using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
             if ((await context.Leaders.AsNoTracking().FirstOrDefaultAsync(cancellationToken)) is not null)
             {
                 _logger.LogInformation("Leaders already exist in database. Skipping push.");
-                return;
+                return false;
             }
 
             var data = await GetFromRedis();
@@ -55,6 +55,7 @@ namespace TowerFight.BusinessLogic.Services
             await context.Leaders.AddRangeAsync(leaders, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("Pushed leader data to database.");
+            return true;
         }
 
         private async Task<Dictionary<byte, List<Leader>>> GetFromRedis()
