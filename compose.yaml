@@ -1,0 +1,60 @@
+services:
+  game_server:
+    container_name: tower_server_api
+    build: .
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - DBSETTINGS__PGCONNECTIONSTRING=Host=pgdb;Database=TowerFightdb;Username=postgres;Password=IC@ntBel!eve1tsN0tAS3cur3P4ssw0rd!;GSS Encryption Mode=Disable;
+      - REDISSETTINGS__USEINMEMORYCACHE=true
+      - BASICAUTH__USERNAME=admin
+      - BASICAUTH__PASSWORD=admin
+      - SIGNINGSETTINGS__ENABLED=true
+      - SIGNINGSETTINGS__HIGHSCOREHASHSALT=salt
+    depends_on:
+      pgdb:
+        condition: service_healthy
+        restart: true
+      migrations:
+        condition: service_completed_successfully
+    entrypoint: >
+      dotnet TowerFight.API.dll
+    
+  migrations:
+    container_name: tower_server_db_migrations
+    restart: no
+    build:
+      args:
+        BUILDPLATFORM: linux/amd64
+        TARGETARCH: x64
+      context: .
+      dockerfile: Dockerfile.migrations
+    environment:
+      - DBSETTINGS__PGCONNECTIONSTRING=Host=pgdb;Database=TowerFightdb;Username=postgres;Password=IC@ntBel!eve1tsN0tAS3cur3P4ssw0rd!;GSS Encryption Mode=Disable;
+    depends_on:
+      pgdb:
+        condition: service_healthy
+  
+  pgdb:
+    image: postgres:18.3-alpine
+    container_name: postgres_db
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: IC@ntBel!eve1tsN0tAS3cur3P4ssw0rd!
+      POSTGRES_DB: TowerFightdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+volumes:
+  postgres_data:

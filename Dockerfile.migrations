@@ -1,0 +1,27 @@
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+USER app
+WORKDIR /app
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+COPY ["nuget.config", "."]
+COPY ["TowerFight.API/TowerFight.API.csproj", "TowerFight.API/"]
+COPY ["TowerFight.BuinessLogic/TowerFight.BusinessLogic.csproj", "TowerFight.BuinessLogic/"]
+RUN dotnet restore "./TowerFight.API/./TowerFight.API.csproj"
+COPY . .
+WORKDIR "/src/TowerFight.API"
+
+RUN dotnet tool install --global dotnet-ef
+RUN export PATH="$PATH:/root/.dotnet/tools" && \
+  dotnet ef migrations add All && \
+  dotnet ef migrations bundle --self-contained
+
+FROM base AS final
+COPY --from=build /root/.dotnet/ /root/.dotnet/
+COPY --from=build /src/TowerFight.API/efbundle /efmigrations/
+
+WORKDIR /efmigrations
+
+CMD ./efbundle --connection "$DBSETTINGS__PGCONNECTIONSTRING"
+
