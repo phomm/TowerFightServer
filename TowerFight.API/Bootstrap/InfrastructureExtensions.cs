@@ -96,10 +96,14 @@ public static class InfrastructureExtensions
         serviceCollection
             .AddHealthChecks()
             .AddCheck<ApiHealthCheck>("Api")
-            .AddRedis(configuration[$"{nameof(RedisSettings)}:{nameof(RedisSettings.ConnectionString)}"]!,
-                failureStatus: HealthStatus.Degraded)
             .AddNpgSql(configuration[$"{nameof(DbSettings)}:{nameof(DbSettings.PgConnectionString)}"]!,
                 failureStatus: HealthStatus.Degraded);
+
+        if (configuration[$"{nameof(RedisSettings)}:{nameof(RedisSettings.UseInMemoryCache)}"] == false.ToString())
+            serviceCollection
+                .AddHealthChecks()
+                .AddRedis(configuration[$"{nameof(RedisSettings)}:{nameof(RedisSettings.ConnectionString)}"]!,
+                    failureStatus: HealthStatus.Degraded);
 
         return serviceCollection;
     }
