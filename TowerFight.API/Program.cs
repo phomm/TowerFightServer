@@ -30,7 +30,8 @@ builder.Services
     .AddSwagger()
     .AddInternalServices()
     .AddDbServices(builder.Configuration)
-    .AddRedis(redisSettings);
+    .AddRedis(redisSettings)    
+    .AddCorsAllowsAny();
 
 var app = builder.Build();
 

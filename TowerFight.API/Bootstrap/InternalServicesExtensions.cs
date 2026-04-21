@@ -29,4 +29,19 @@ public static class InternalServicesExtensions
         void GetOptions(DbContextOptionsBuilder options) => 
             options.UseNpgsql(dbSettings.PgConnectionString, b => b.MigrationsAssembly(assemblyName));
     }
+
+    public static IServiceCollection AddCorsAllowsAny(this IServiceCollection services)
+    {
+        services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(builder =>
+            {
+                builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
+        });
+
+        return services;
+    }
 }
