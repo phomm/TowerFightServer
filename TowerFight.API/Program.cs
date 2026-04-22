@@ -51,6 +51,7 @@ app.UseSwaggerUI(options =>
 });
 
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
 app.StartRedis(redisSettings.UseInMemoryCache);
