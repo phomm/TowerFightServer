@@ -12,6 +12,7 @@ public static class InternalServicesExtensions
     {
         services.AddTransient<ILeadersService, LeadersService>();
         services.AddTransient<ICacheService, CacheService>();
+        services.AddTransient<IBanzaiLogService, BanzaiLogService>();
         services.AddSingleton<HighscoreHashUtility>();
         return services;
     }
