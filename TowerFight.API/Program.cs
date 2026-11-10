@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using TowerFight.API.Bootstrap;
 using TowerFight.API.Health;
 using TowerFight.BusinessLogic.Data;
@@ -37,9 +38,10 @@ builder.Services
 
 var app = builder.Build();
 
-var dbContextFactory = app.Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
-await using (var dbContext = await dbContextFactory.CreateDbContextAsync())
+if (!app.Environment.IsDevelopment())
 {
+    var dbContextFactory = app.Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    await using var dbContext = await dbContextFactory.CreateDbContextAsync();
     app.Logger.LogInformation("Checking and applying pending database migrations.");
     await dbContext.Database.MigrateAsync();
 }
@@ -52,6 +54,26 @@ app.MapHealthChecks(HealthCheckConsts.EndpointPath, new HealthCheckOptions
 if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    if (!context.Request.Path.StartsWithSegments("/swagger"))
+    {
+        await next();
+        return;
+    }
+
+    var authentication = await context.AuthenticateAsync(AuthExtensions.BasicAuthenticationScheme);
+    if (!authentication.Succeeded || authentication.Principal is null)
+    {
+        await context.ChallengeAsync(AuthExtensions.BasicAuthenticationScheme);
+        return;
+    }
+
+    context.User = authentication.Principal;
+    await next();
+});
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
@@ -59,7 +81,6 @@ app.UseSwaggerUI(options =>
     options.EnableDeepLinking();
 });
 
-app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthorization();
 app.MapControllers();

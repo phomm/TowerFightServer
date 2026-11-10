@@ -10,37 +10,54 @@ namespace TowerFight.API.Bootstrap;
 public class BasicAuthenticationHandler(IConfiguration config, IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder) 
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
-    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         if (!Request.Headers.TryGetValue("Authorization", out var value))
-            return AuthenticateResult.NoResult();
+            return Task.FromResult(AuthenticateResult.NoResult());
 
+        if (!AuthenticationHeaderValue.TryParse(value.ToString(), out var authHeader) ||
+            !string.Equals(authHeader.Scheme, "Basic", StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrEmpty(authHeader.Parameter))
+            return Task.FromResult(AuthenticateResult.Fail("Invalid Authorization Header"));
+
+        string credentials;
         try
         {
-            var authHeader = AuthenticationHeaderValue.Parse(value);
-            var credentialBytes = Convert.FromBase64String(authHeader.Parameter ?? string.Empty);
-            var credentials = Encoding.UTF8.GetString(credentialBytes).Split(':', 2);
-            var username = credentials[0];
-            var password = credentials[1];
-
-            var validUsername = config["BasicAuth:Username"];   
-            var validPassword = config["BasicAuth:Password"];
-
-            if (username == validUsername && password == validPassword)
-            {
-                var claims = new[] { 
-                    new Claim(ClaimTypes.Name, username),
-                    new Claim(ClaimTypes.Role, Policies.Admin)
-                };
-                var identity = new ClaimsIdentity(claims, Scheme.Name);
-                var principal = new ClaimsPrincipal(identity);
-                var ticket = new AuthenticationTicket(principal, Scheme.Name);
-
-                return AuthenticateResult.Success(ticket);
-            }
+            credentials = Encoding.UTF8.GetString(Convert.FromBase64String(authHeader.Parameter));
         }
-        catch { return AuthenticateResult.Fail("Invalid Authorization Header"); }
+        catch (FormatException)
+        {
+            return Task.FromResult(AuthenticateResult.Fail("Invalid Authorization Header"));
+        }
 
-        return AuthenticateResult.Fail("Invalid Username or Password");
+        var separatorIndex = credentials.IndexOf(':');
+        if (separatorIndex < 0)
+            return Task.FromResult(AuthenticateResult.Fail("Invalid Authorization Header"));
+
+        var username = credentials[..separatorIndex];
+        var password = credentials[(separatorIndex + 1)..];
+        var validUsername = config["BasicAuth:Username"];
+        var validPassword = config["BasicAuth:Password"];
+
+        if (!string.Equals(username, validUsername, StringComparison.Ordinal) ||
+            !string.Equals(password, validPassword, StringComparison.Ordinal))
+            return Task.FromResult(AuthenticateResult.Fail("Invalid Username or Password"));
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.Name, username),
+            new Claim(ClaimTypes.Role, Policies.Admin)
+        };
+        var identity = new ClaimsIdentity(claims, Scheme.Name);
+        var principal = new ClaimsPrincipal(identity);
+        var ticket = new AuthenticationTicket(principal, Scheme.Name);
+
+        return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+
+    protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+    {
+        Response.Headers.WWWAuthenticate = "Basic realm=\"TowerFight API\"";
+        return base.HandleChallengeAsync(properties);
     }
 }

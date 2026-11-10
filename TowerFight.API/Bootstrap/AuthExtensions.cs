@@ -4,17 +4,18 @@ namespace TowerFight.API.Bootstrap;
 
 public static class AuthExtensions
 {
+    public const string BasicAuthenticationScheme = "BasicAuthentication";
+
     public static IServiceCollection CustomizeAuthorization(this IServiceCollection serviceCollection)
     {
-        const string SchemaName = "BasicAuthentication";
-        serviceCollection.AddAuthentication(SchemaName)
-            .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>(SchemaName, null);
+        serviceCollection.AddAuthentication(BasicAuthenticationScheme)
+            .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>(BasicAuthenticationScheme, null);
 
         // 2. Build Authorization Policies
         serviceCollection.AddAuthorizationBuilder()
             .AddPolicy(Policies.Admin, policy => 
             {
-                policy.AuthenticationSchemes.Add(SchemaName);
+                policy.AuthenticationSchemes.Add(BasicAuthenticationScheme);
                 policy.RequireAuthenticatedUser();
                 policy.RequireRole(Policies.Admin);
             });
