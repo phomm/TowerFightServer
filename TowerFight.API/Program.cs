@@ -1,8 +1,10 @@
 using TowerFight.API.Bootstrap;
 using TowerFight.API.Health;
+using TowerFight.BusinessLogic.Data;
 using TowerFight.BusinessLogic.Data.Config;
 using TowerFight.BusinessLogic.Data.Redis;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using HealthChecks.UI.Client;
 using System.Text.Json.Serialization;
 using System.Text.Json;
@@ -34,6 +36,13 @@ builder.Services
     .AddCorsAllowsAny();
 
 var app = builder.Build();
+
+var dbContextFactory = app.Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
+await using (var dbContext = await dbContextFactory.CreateDbContextAsync())
+{
+    app.Logger.LogInformation("Checking and applying pending database migrations.");
+    await dbContext.Database.MigrateAsync();
+}
 
 app.MapHealthChecks(HealthCheckConsts.EndpointPath, new HealthCheckOptions
 {
